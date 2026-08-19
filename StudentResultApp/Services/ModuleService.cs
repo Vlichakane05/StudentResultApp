@@ -1,77 +1,41 @@
-﻿using StudentResultApp.Models;
+using Microsoft.EntityFrameworkCore;
+using StudentResultApp.Data;
+using StudentResultApp.Models;
 
 namespace StudentResultApp.Services
 {
     public class ModuleService
     {
-        private readonly List<Module> _modules = new()
+        private readonly StudentResultDbContext _context;
+
+        public ModuleService(StudentResultDbContext context)
         {
-            new Module
-            {
-                Id = 1,
-                Code = "MDB622",
-                Name = "Database Manipulation",
-                AcademicYear = 2026,
-                StudentCount = 14,
-                Status = "Active"
-            },
+            _context = context;
+        }
 
-            new Module
-            {
-                Id = 2,
-                Code = "AZ400",
-                Name = "Designing and Implementing Microsoft DevOps Solutions",
-                AcademicYear = 2026,
-                StudentCount = 14,
-                Status = "Active"
-            },
-
-            new Module
-            {
-                Id = 3,
-                Code = "SDT621",
-                Name = "Software Development",
-                AcademicYear = 2026,
-                StudentCount = 12,
-                Status = "Active"
-            },
-
-            new Module
-            {
-                Id = 4,
-                Code = "DAG511",
-                Name = "Data Analytics",
-                AcademicYear = 2026,
-                StudentCount = 10,
-                Status = "Inactive"
-            }
-        };
-
-        public List<Module> GetAll()
+        public async Task<List<Module>> GetAllAsync()
         {
-            return _modules
+            return await _context.Modules
                 .OrderBy(m => m.Code)
-                .ToList();
+                .ToListAsync();
         }
 
-        public Module? GetById(int id)
+        public async Task<Module?> GetByIdAsync(int id)
         {
-            return _modules.FirstOrDefault(m => m.Id == id);
+            return await _context.Modules
+                .FirstOrDefaultAsync(m => m.Id == id);
         }
 
-        public void Add(Module module)
+        public async Task AddAsync(Module module)
         {
-            module.Id = _modules.Count == 0
-                ? 1
-                : _modules.Max(m => m.Id) + 1;
-
-            _modules.Add(module);
+            _context.Modules.Add(module);
+            await _context.SaveChangesAsync();
         }
 
-        public void Update(Module updatedModule)
+        public async Task UpdateAsync(Module updatedModule)
         {
-            var existingModule =
-                _modules.FirstOrDefault(m => m.Id == updatedModule.Id);
+            var existingModule = await _context.Modules
+                .FirstOrDefaultAsync(m => m.Id == updatedModule.Id);
 
             if (existingModule == null)
                 return;
@@ -81,16 +45,20 @@ namespace StudentResultApp.Services
             existingModule.AcademicYear = updatedModule.AcademicYear;
             existingModule.StudentCount = updatedModule.StudentCount;
             existingModule.Status = updatedModule.Status;
+
+            await _context.SaveChangesAsync();
         }
 
-        public void Delete(int id)
+        public async Task DeleteAsync(int id)
         {
-            var module = _modules.FirstOrDefault(m => m.Id == id);
+            var module = await _context.Modules
+                .FirstOrDefaultAsync(m => m.Id == id);
 
-            if (module != null)
-            {
-                _modules.Remove(module);
-            }
+            if (module == null)
+                return;
+
+            _context.Modules.Remove(module);
+            await _context.SaveChangesAsync();
         }
     }
 }
